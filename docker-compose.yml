@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  database:
+    container_name: db_mysql
+    image: mysql:5.7
+    env_file: env
+    restart: always
+    # Descomentar para debugear
+    ports:
+      - 3306:3306
+    volumes:
+      - ./database/data:/var/lib/mysql
