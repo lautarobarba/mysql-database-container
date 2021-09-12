@@ -1,5 +1,6 @@
-# My Database Container
-MySQL with Docker
+# MySQL with Docker
+
+Una base de datos mysql lista para poner en producción.
 
 # Dependencias 
 
@@ -49,7 +50,7 @@ $ sudo systemctl enable docker.service
 # O el administrador de servicios que corresponda para el sistema
 ```
 
-## Database (MySQL)
+# Database (MySQL)
 Toda la base de datos queda guardada en **/database/data**
 
 (solo para debug) Para conectarse a una terminal del contenedor
