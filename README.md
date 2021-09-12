@@ -1,6 +1,6 @@
-# MySQL with Docker
+# MySQL con Docker
 
-Una base de datos mysql lista para poner en producción.
+Una base de datos **MySQL** lista para poner en producción.
 
 # Dependencias 
 
