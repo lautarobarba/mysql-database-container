@@ -1,12 +1,19 @@
 version: "3.8"
 services:
-  database:
-    container_name: db_mysql
+  prod:
+    container_name: ${CONTAINER_NAME}
     image: mysql:5.7
-    env_file: env
+    env_file: .env
     restart: always
-    # Descomentar para debugear
     ports:
-      - 3306:3306
+      - ${DB_PORT}:3306
     volumes:
       - ./database/data:/var/lib/mysql
+      - ./backups:/backups
+    networks:
+      - mysql_net
+
+networks:
+  mysql_net:
+    name: mysql_net
+    driver: bridge

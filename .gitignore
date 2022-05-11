@@ -1,5 +1,6 @@
 # Variables de entorno
-env
+.env
 
 # Volumenes de docker
 database
+backups
