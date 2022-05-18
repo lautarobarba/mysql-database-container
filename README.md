@@ -33,57 +33,45 @@ Toda la base de datos queda guardada en **/database/data**.
 
 Para conectarse a una terminal del contenedor (sólo para debug)
 
-**CONTAINER_NAME**: está en el archivo _.env_
-
 ```bash
-$ docker container exec -it CONTAINER_NAME bash
+$ docker container exec -it prod bash
 ```
 
 ## Backups
 
-Se creó un volumen para guardar los **backups**.
+Se creó un volumen para guardar los _backups_ en **/backups**.
 
 ### Realizar backup
 
 Para hacer el backup tenemos que entrar a una shell del contenedor y generar el archivo de backup en la carpeta donde esta montado el volumen.
-Usar los datos configurados previamente en .env
+Usar los datos configurados previamente en **.env**.
 
-**CONTAINER_NAME**: está en el archivo _.env_
+**MYSQL_DATABASE**: está en el archivo _.env_
 
-**POSTGRES_USER**: está en el archivo _.env_
-
-**POSTGRES_DB**: está en el archivo _.env_
+**MYSQL_ROOT_PASSWORD**: está en el archivo _.env_
 
 ```bash
-$ docker container exec -it CONTAINER_NAME bash
-root# pg_dump -U POSTGRES_USER POSTGRES_DB > backups/${POSTGRES_DB}$(date "+%Y%m%d-%H:%M").sql
-root# exit
+$ docker container exec -it prod bash
+root@container:$ mysqldump -p ${MYSQL_DATABASE} > /backups/${MYSQL_DATABASE}$(date "+%Y%m%d-%H_%M")hs.sql
+root@container:$ # MYSQL_ROOT_PASSWORD
+root@container:$ exit
 ```
 
 ### Restaurar backup
 
 Para restaurar el backup tenemos que entrar a una shell del contenedor y restaurar el backup que se encuentra en el volumen montado.
 
-1. Hay que asegurarse de tener el backup en la carpeta local backups.
-2. Detener el contenedor de docker si esta corriendo.
-3. Eliminar la carpeta database que tiene la base de datos actual.
-4. Volver a iniciar el contenedor.
+1. Hay que asegurarse de tener el backup en la carpeta **/backups**.
 
-**CONTAINER_NAME**: está en el archivo _.env_
-
-**POSTGRES_USER**: está en el archivo _.env_
+**MYSQL_DATABASE**: está en el archivo _.env_
 
 **NOMBRE_DEL_BACKUP**: archivo ubicado en _backups_
 
+**MYSQL_ROOT_PASSWORD**: está en el archivo _.env_
+
 ```bash
-$ docker compose down
-$ sudo rm -r database
-$ docker compose up -d
-$ docker container exec -it CONTAINER_NAME bash
-root# cd backups
-root# psql -U POSTGRES_USER
-usuario_postgres=# \conninfo
-usuario_postgres=# \i NOMBRE_DEL_BACKUP.sql
-usuario_postgres=# \q
-root# exit
+$ docker container exec -it prod bash
+root@container:$ mysql -p ${MYSQL_DATABASE} < /backups/NOMBRE_BACKUP.sql
+root@container:$ # MYSQL_ROOT_PASSWORD
+root@container:$ exit
 ```
