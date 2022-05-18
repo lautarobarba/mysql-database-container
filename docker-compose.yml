@@ -12,6 +12,8 @@ services:
       - ./backups:/backups
     networks:
       - mysql_net
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
 networks:
   mysql_net:
