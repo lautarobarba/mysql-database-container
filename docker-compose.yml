@@ -4,6 +4,8 @@ services:
     container_name: ${CONTAINER_NAME}
     image: mysql:5.7
     env_file: .env
+    environment:
+      - TZ=America/Argentina/Buenos_Aires
     restart: always
     ports:
       - ${DB_PORT}:3306
