@@ -10,12 +10,5 @@ services:
     volumes:
       - ./database/data:/var/lib/mysql
       - ./backups:/backups
-    networks:
-      - mysql_net
     extra_hosts:
       - host.docker.internal:host-gateway
-
-networks:
-  mysql_net:
-    name: mysql_net
-    driver: bridge

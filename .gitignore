@@ -4,3 +4,9 @@
 # Volumenes de docker
 database
 backups
+
+# Logs
+backup.log
+
+# Script Backup
+backup_cron.sh

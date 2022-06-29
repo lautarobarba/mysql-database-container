@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+#Ruta de destino backup
+#DEST=usuaro@host:/path
+DEST=usuaro@host:/path
+
+#Variables de entorno (LAS MISMAS INGRESADAS EN .env)
+CONTAINER_NAME=mysql_db
+MYSQL_DATABASE=mysql
+MYSQL_ROOT_PASSWORD=mysql
+
+
+SCRIPT_PATH=$(realpath $0)
+WORKDIR=$(dirname ${SCRIPT_PATH})
+DIR=$(pwd)
+LOG_DIR=${WORKDIR}/backup.log
+FECHA=`date +%Y%m%d`
+
+echo [`date`] ========== Comenzando script Backup - MYSQL ========== >> $LOG_DIR
+cd ${WORKDIR}
+
+echo [`date`] ::Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql >> $LOG_DIR
+docker container exec -it ${CONTAINER_NAME} bash -c "mysqldump -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > backups/${MYSQL_DATABASE}${FECHA}.sql"
+echo [`date`] ___ OK >> $LOG_DIR
+echo ------------------------------------ >> $LOG_DIR
+
+echo [`date`] ::Comprimiendo ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.zip >> $LOG_DIR
+cd backups
+zip -r ${MYSQL_DATABASE}${FECHA}.zip ${MYSQL_DATABASE}${FECHA}.sql
+cd ${WORKDIR}
+echo [`date`] ___ OK >> $LOG_DIR
+echo ------------------------------------ >> $LOG_DIR
+
+echo [`date`] ::Copiando de ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.zip a ${DEST} >> $LOG_DIR
+scp backups/${MYSQL_DATABASE}${FECHA}.zip ${DEST}
+echo [`date`] ___ OK >> $LOG_DIR
+echo ------------------------------------ >> $LOG_DIR
+
+echo [`date`] ::Eliminando ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.* >> $LOG_DIR
+rm backups/${MYSQL_DATABASE}${FECHA}.*
+echo [`date`] ___ OK >> $LOG_DIR
+echo ------------------------------------ >> $LOG_DIR
+
+# Vuelvo al directorio actual
+cd ${DIR}
+exit 0
