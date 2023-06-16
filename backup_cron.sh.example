@@ -5,7 +5,7 @@
 DEST=usuaro@host:/path
 
 #Variables de entorno (LAS MISMAS INGRESADAS EN .env)
-CONTAINER_NAME=mysql_db
+SERVICE_NAME=mysql_db
 MYSQL_DATABASE=mysql
 MYSQL_ROOT_PASSWORD=mysql
 
@@ -20,7 +20,7 @@ echo [`date`] ========== Comenzando script Backup - MYSQL ========== >> $LOG_DIR
 cd ${WORKDIR}
 
 echo [`date`] ::Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql >> $LOG_DIR
-docker container exec -it ${CONTAINER_NAME} bash -c "mysqldump -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > backups/${MYSQL_DATABASE}${FECHA}.sql"
+docker compose exec -it ${SERVICE_NAME} bash -c "mysqldump -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > backups/${MYSQL_DATABASE}${FECHA}.sql"
 echo [`date`] ___ OK >> $LOG_DIR
 echo ------------------------------------ >> $LOG_DIR
 

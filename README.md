@@ -14,7 +14,7 @@ $ nano .env
 ## Iniciar
 
 ```bash
-$ docker compose up -d prod
+$ docker compose up -d
 ```
 
 _Quitando la opción *-d* se ven los logs del contenedor._
@@ -34,16 +34,16 @@ Toda la base de datos queda guardada en **/database/data**
 Para conectarse a una terminal del contenedor (sólo para debug).
 Usar los datos configurados previamente en **.env**.
 
-**MYSQL_USER**: está en el archivo _.env_
+**DB_USER**: está en el archivo _.env_
 
-**MYSQL_DATABASE**: está en el archivo _.env_
+**DB_NAME**: está en el archivo _.env_
 
-**MYSQL_PASSWORD**: está en el archivo _.env_
+**DB_PASSWORD**: está en el archivo _.env_
 
 ```bash
 $ docker compose exec -it prod bash
-root@container:$ mysql -U ${MYSQL_USER} ${MYSQL_DATABASE}
-Enter password: # MYSQL_PASSWORD
+root@container:$ mysql -U ${DB_USER} ${DB_NAME}
+Enter password: # DB_PASSWORD
 ```
 
 ## Backups
@@ -55,14 +55,16 @@ Se creó un volumen para guardar los _backups_ en **/backups**.
 Para hacer el backup tenemos que entrar a una shell del contenedor y generar el archivo de backup en la carpeta donde esta montado el volumen.
 Usar los datos configurados previamente en **.env**.
 
-**MYSQL_DATABASE**: está en el archivo _.env_
+**DB_USER**: está en el archivo _.env_
 
-**MYSQL_PASSWORD**: está en el archivo _.env_
+**DB_NAME**: está en el archivo _.env_
+
+**DB_PASSWORD**: está en el archivo _.env_
 
 ```bash
 $ docker compose exec -it prod bash
-root@container:$ mysqldump -p ${MYSQL_DATABASE} > /backups/${MYSQL_DATABASE}$(date "+%Y%m%d-%H_%M")hs.sql
-Enter password: # MYSQL_PASSWORD
+root@container:$ mysqldump -U ${DB_USER} -p ${DB_NAME} > /backups/${DB_NAME}$(date "+%Y%m%d-%H_%M")hs.sql
+Enter password: # DB_PASSWORD
 root@container:$ exit
 ```
 
@@ -72,17 +74,15 @@ Para restaurar el backup tenemos que entrar a una shell del contenedor y restaur
 
 1. Hay que asegurarse de tener el backup en la carpeta **/backups**.
 
-**CONTAINER_NAME**: está en el archivo _.env_
-
 **MYSQL_ROOT_PASSWORD**: está en el archivo _.env_
 
 ```bash
 $ cd backups
 $ sudo unzip NOMBRE_BACKUP.zip
 $ cd ..
-$ docker compose exec -it prod bash
-root@container:$ mysql -p ${MYSQL_DATABASE} < /backups/NOMBRE_BACKUP.sql
-Enter password: # MYSQL_PASSWORD
+$ docker compose exec -it mysql_db bash
+root@container:$ mysql -U ${DB_USER} -p ${DB_NAME} < /backups/NOMBRE_BACKUP.sql
+Enter password: # DB_PASSWORD
 root@container:$ exit
 ```
 
@@ -144,5 +144,4 @@ $  echo \
 
 $ sudo apt-get update
 $ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
 ```

@@ -1,12 +1,16 @@
 version: "3.8"
 name: mysql_db
 services:
-  prod:
-    container_name: ${CONTAINER_NAME}
-    image: mysql:5.7
+  mysql_db:
+    container_name: mysql_db
+    image: mysql:8.0
     env_file: .env
     environment:
       - TZ=America/Argentina/Buenos_Aires
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
     restart: always
     ports:
       - ${DB_PORT}:3306
