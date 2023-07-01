@@ -115,10 +115,10 @@ $ # Programar la tarea con cron (USUARIO ROOT)
 root$ crontab -e
 root$ # En cron:
 			# Para probar un backup cada 5 minutos
-			*/5 * * * * /ruta_al_script/backup_cron.sh
+			*/5 * * * * bash /ruta_al_script/backup_cron.sh
 
 			# Para dejar el backup 1 vez por dia
-			0 0 * * * /ruta_al_script/backup_cron.sh
+			0 0 * * * bash /ruta_al_script/backup_cron.sh
 ```
 
 # Apéndice

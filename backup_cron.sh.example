@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 
-#Ruta de destino backup
-#DEST=usuaro@host:/path
-DEST=usuaro@host:/path
-
+#========== CONFIG ==========
 #Variables de entorno (LAS MISMAS INGRESADAS EN .env)
-SERVICE_NAME=mysql_db
-MYSQL_DATABASE=mysql
-MYSQL_ROOT_PASSWORD=mysql
+DB_NAME=demo_db
+DB_USER=demo_db
+DB_PASSWORD=demo_db
 
+#Ruta de destino backup
+SSH_DEST_HOST=192.168.0.1
+SSH_DEST_PORT=22
+SSH_DEST_PATH=/tmp/backups
+SSH_DEST_USER=usuario
+
+# Servicio definido en docker-compose.yml Linea 4.
+SERVICE_NAME=mysql_db 
+#======== END CONFIG ========
 
 SCRIPT_PATH=$(realpath $0)
 WORKDIR=$(dirname ${SCRIPT_PATH})
@@ -16,31 +22,51 @@ DIR=$(pwd)
 LOG_DIR=${WORKDIR}/backup.log
 FECHA=`date +%Y%m%d`
 
-echo [`date`] ========== Comenzando script Backup - MYSQL ========== >> $LOG_DIR
+echo [`date`] "========== Comenzando script Backup - MYSQL ==========" >> $LOG_DIR
 cd ${WORKDIR}
 
-echo [`date`] ::Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql >> $LOG_DIR
-docker compose exec -it ${SERVICE_NAME} bash -c "mysqldump -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > backups/${MYSQL_DATABASE}${FECHA}.sql"
-echo [`date`] ___ OK >> $LOG_DIR
-echo ------------------------------------ >> $LOG_DIR
+echo [`date`] ">> Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql" >> $LOG_DIR
+docker compose exec -it ${SERVICE_NAME} bash -c "mysqldump -p${DB_PASSWORD} ${DB_NAME} > backups/${DB_NAME}${FECHA}.sql"
+if [ $? -ne 0 ]; then 
+    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
+    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
+    echo ------------------------------------ >> $LOG_DIR
+    exit 1
+fi
+echo [`date`] "STATUS: OK" >> $LOG_DIR
 
-echo [`date`] ::Comprimiendo ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.zip >> $LOG_DIR
+echo [`date`] ">> Comprimiendo ${WORKDIR}/backups/${DB_NAME}${FECHA}.sql a ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip" >> $LOG_DIR
 cd backups
-zip -r ${MYSQL_DATABASE}${FECHA}.zip ${MYSQL_DATABASE}${FECHA}.sql
+zip -r ${DB_NAME}${FECHA}.zip ${DB_NAME}${FECHA}.sql
+if [ $? -ne 0 ]; then 
+    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
+    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
+    echo ------------------------------------ >> $LOG_DIR
+    exit 2
+fi
 cd ${WORKDIR}
-echo [`date`] ___ OK >> $LOG_DIR
-echo ------------------------------------ >> $LOG_DIR
+echo [`date`] "STATUS: OK" >> $LOG_DIR
 
-echo [`date`] ::Copiando de ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.zip a ${DEST} >> $LOG_DIR
-scp backups/${MYSQL_DATABASE}${FECHA}.zip ${DEST}
-echo [`date`] ___ OK >> $LOG_DIR
-echo ------------------------------------ >> $LOG_DIR
+echo [`date`] ">> Copiando de ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip a ${SSH_DEST_USER}@${SSH_DEST_HOST}:${SSH_DEST_PORT}:${SSH_DEST_PATH}" >> $LOG_DIR
+scp -P ${SSH_DEST_PORT} backups/${DB_NAME}${FECHA}.zip ${SSH_DEST_USER}@${SSH_DEST_HOST}:${SSH_DEST_PATH}
+if [ $? -ne 0 ]; then 
+    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
+    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
+    echo ------------------------------------ >> $LOG_DIR
+    exit 3
+fi
+echo [`date`] "STATUS: OK" >> $LOG_DIR
 
-echo [`date`] ::Eliminando ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.* >> $LOG_DIR
-rm backups/${MYSQL_DATABASE}${FECHA}.*
-echo [`date`] ___ OK >> $LOG_DIR
-echo ------------------------------------ >> $LOG_DIR
+echo [`date`] ">> Eliminando ${WORKDIR}/backups/${DB_NAME}${FECHA}.*" >> $LOG_DIR
+rm -f backups/${DB_NAME}${FECHA}.*
+if [ $? -ne 0 ]; then 
+    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
+else
+    echo [`date`] "STATUS: OK" >> $LOG_DIR
+fi
 
 # Vuelvo al directorio actual
 cd ${DIR}
+echo [`date`] "STATUS: BACKUP FINALIZADO CORRECTAMENTE" >> $LOG_DIR
+echo ------------------------------------ >> $LOG_DIR
 exit 0
