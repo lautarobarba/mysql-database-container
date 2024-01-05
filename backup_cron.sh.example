@@ -20,53 +20,53 @@ SCRIPT_PATH=$(realpath $0)
 WORKDIR=$(dirname ${SCRIPT_PATH})
 DIR=$(pwd)
 LOG_DIR=${WORKDIR}/backup.log
-FECHA=`date +%Y%m%d`
+FECHA=$(date +%Y%m%d)
 
-echo [`date`] "========== Comenzando script Backup - MYSQL ==========" >> $LOG_DIR
+echo [$(date)] "========== Comenzando script Backup - MYSQL ==========" >>$LOG_DIR
 cd ${WORKDIR}
 
-echo [`date`] ">> Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql" >> $LOG_DIR
-docker compose exec -it ${SERVICE_NAME} bash -c "mysqldump -p${DB_PASSWORD} ${DB_NAME} > backups/${DB_NAME}${FECHA}.sql"
+echo [$(date)] ">> Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql" >>$LOG_DIR
+docker compose exec ${SERVICE_NAME} bash -c "mysqldump -p${DB_PASSWORD} ${DB_NAME} > backups/${DB_NAME}${FECHA}.sql"
 if [ $? -ne 0 ]; then 
-    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
-    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
-    echo ------------------------------------ >> $LOG_DIR
+    echo [$(date)] "STATUS: ERROR" >>$LOG_DIR
+    echo [$(date)] "STATUS: BACKUP INCOMPLETO" >>$LOG_DIR
+    echo ------------------------------------ >>$LOG_DIR
     exit 1
 fi
-echo [`date`] "STATUS: OK" >> $LOG_DIR
+echo [$(date)] "STATUS: OK" >>$LOG_DIR
 
-echo [`date`] ">> Comprimiendo ${WORKDIR}/backups/${DB_NAME}${FECHA}.sql a ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip" >> $LOG_DIR
+echo [$(date)] ">> Comprimiendo ${WORKDIR}/backups/${DB_NAME}${FECHA}.sql a ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip" >>$LOG_DIR
 cd backups
 zip -r ${DB_NAME}${FECHA}.zip ${DB_NAME}${FECHA}.sql
 if [ $? -ne 0 ]; then 
-    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
-    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
-    echo ------------------------------------ >> $LOG_DIR
+    echo [$(date)] "STATUS: ERROR" >>$LOG_DIR
+    echo [$(date)] "STATUS: BACKUP INCOMPLETO" >>$LOG_DIR
+    echo ------------------------------------ >>$LOG_DIR
     exit 2
 fi
 cd ${WORKDIR}
-echo [`date`] "STATUS: OK" >> $LOG_DIR
+echo [$(date)] "STATUS: OK" >>$LOG_DIR
 
-echo [`date`] ">> Copiando de ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip a ${SSH_DEST_USER}@${SSH_DEST_HOST}:${SSH_DEST_PORT}:${SSH_DEST_PATH}" >> $LOG_DIR
+echo [$(date)] ">> Copiando de ${WORKDIR}/backups/${DB_NAME}${FECHA}.zip a ${SSH_DEST_USER}@${SSH_DEST_HOST}:${SSH_DEST_PORT}:${SSH_DEST_PATH}" >>$LOG_DIR
 scp -P ${SSH_DEST_PORT} backups/${DB_NAME}${FECHA}.zip ${SSH_DEST_USER}@${SSH_DEST_HOST}:${SSH_DEST_PATH}
 if [ $? -ne 0 ]; then 
-    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
-    echo [`date`] "STATUS: BACKUP INCOMPLETO" >> $LOG_DIR
-    echo ------------------------------------ >> $LOG_DIR
+    echo [$(date)] "STATUS: ERROR" >>$LOG_DIR
+    echo [$(date)] "STATUS: BACKUP INCOMPLETO" >>$LOG_DIR
+    echo ------------------------------------ >>$LOG_DIR
     exit 3
 fi
-echo [`date`] "STATUS: OK" >> $LOG_DIR
+echo [$(date)] "STATUS: OK" >>$LOG_DIR
 
-echo [`date`] ">> Eliminando ${WORKDIR}/backups/${DB_NAME}${FECHA}.*" >> $LOG_DIR
+echo [$(date)] ">> Eliminando ${WORKDIR}/backups/${DB_NAME}${FECHA}.*" >>$LOG_DIR
 rm -f backups/${DB_NAME}${FECHA}.*
 if [ $? -ne 0 ]; then 
-    echo [`date`] "STATUS: ERROR" >> $LOG_DIR
+    echo [$(date)] "STATUS: ERROR" >>$LOG_DIR
 else
-    echo [`date`] "STATUS: OK" >> $LOG_DIR
+    echo [$(date)] "STATUS: OK" >>$LOG_DIR
 fi
 
 # Vuelvo al directorio actual
 cd ${DIR}
-echo [`date`] "STATUS: BACKUP FINALIZADO CORRECTAMENTE" >> $LOG_DIR
-echo ------------------------------------ >> $LOG_DIR
+echo [$(date)] "STATUS: BACKUP FINALIZADO CORRECTAMENTE" >>$LOG_DIR
+echo ------------------------------------ >>$LOG_DIR
 exit 0
