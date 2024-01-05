@@ -41,8 +41,8 @@ Usar los datos configurados previamente en **.env**.
 **DB_PASSWORD**: está en el archivo _.env_
 
 ```bash
-$ docker compose exec -it prod bash
-root@container:$ mysql -U ${DB_USER} ${DB_NAME}
+$ docker compose exec -it mysql_db bash
+root@container:$ mysql -u ${DB_USER} -p ${DB_NAME}
 Enter password: # DB_PASSWORD
 ```
 
@@ -62,8 +62,8 @@ Usar los datos configurados previamente en **.env**.
 **DB_PASSWORD**: está en el archivo _.env_
 
 ```bash
-$ docker compose exec -it prod bash
-root@container:$ mysqldump -U ${DB_USER} -p ${DB_NAME} > /backups/${DB_NAME}$(date "+%Y%m%d-%H_%M")hs.sql
+$ docker compose exec -it mysql_db bash
+root@container:$ mysqldump -u root -p ${DB_NAME} > /backups/${DB_NAME}$(date "+%Y%m%d-%H_%M")hs.sql
 Enter password: # DB_PASSWORD
 root@container:$ exit
 ```
@@ -74,14 +74,14 @@ Para restaurar el backup tenemos que entrar a una shell del contenedor y restaur
 
 1. Hay que asegurarse de tener el backup en la carpeta **/backups**.
 
-**MYSQL_ROOT_PASSWORD**: está en el archivo _.env_
+**DB_PASSWORD**: está en el archivo _.env_
 
 ```bash
 $ cd backups
 $ sudo unzip NOMBRE_BACKUP.zip
 $ cd ..
 $ docker compose exec -it mysql_db bash
-root@container:$ mysql -U ${DB_USER} -p ${DB_NAME} < /backups/NOMBRE_BACKUP.sql
+root@container:$ mysql -u root -p ${DB_NAME} < /backups/NOMBRE_BACKUP.sql
 Enter password: # DB_PASSWORD
 root@container:$ exit
 ```
@@ -93,15 +93,23 @@ root@container:$ exit
 En el servidor de destino tiene que estar configurado ssh para aceptar autenticación con Public Keys.
 
 ```bash
-$ # En el servidor de destino
+$ #------------------------------------------------------------------------------
+$ # ¡¡¡En el servidor de destino!!!
+$ # Preparar un usuario y ruta de backups
+$ useradd -m backup_user -s /bin/bash
+$ passwd backup_user
+$ # Tendremos un usuario backup_user para realizar los backups
+$ #   y un dir /home/backup_user para guardarlos
+$
+$ # Configurar autenticación de sshd
 $ sudo nano /etc/ssh/sshd_config
 $ # Descomentar la linea que tiene: PubkeyAuthentication yes
 $ sudo systemctl restart sshd.service
 $ #------------------------------------------------------------------------------
-$ # En el servidor de origen del backup (USUARIO ROOT)
+$ # ¡¡¡En el servidor de origen del backup (USUARIO ROOT)!!!
 root$ # Generar las claves del usuario que va a ejecutar el script en este equipo
 root$ ssh-keygen
-root$ ssh-copy-id USUARIO@SERVIDOR_DESTINO
+root$ ssh-copy-id backup_user@SERVIDOR_DESTINO
 ```
 
 ### Programar tarea
@@ -109,6 +117,7 @@ root$ ssh-copy-id USUARIO@SERVIDOR_DESTINO
 ```bash
 $ # En el servidor de origen del backup
 $ cp backup_cron.sh.example backup_cron.sh
+$ chmod +x backup_cron.sh
 $ # Configurar el destino. Editar la linea #DEST=usuaro@host:/path
 $ nano backup_cron.sh
 $ # Programar la tarea con cron (USUARIO ROOT)
