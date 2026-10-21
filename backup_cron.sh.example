@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 #========== CONFIG ==========
-#Variables de entorno (LAS MISMAS INGRESADAS EN .env)
-DB_NAME=demo_db
-DB_USER=demo_db
-DB_PASSWORD=demo_db
+#Base de datos a respaldar y password de root (LA MISMA INGRESADA EN .env)
+DB_NAME=nombre_base_de_datos
+DB_ROOT_PASSWORD=cambiar_esta_password
 
 #Ruta de destino backup
 SSH_DEST_HOST=192.168.0.1
@@ -25,8 +24,8 @@ FECHA=$(date +%Y%m%d)
 echo [$(date)] "========== Comenzando script Backup - MYSQL ==========" >>$LOG_DIR
 cd ${WORKDIR}
 
-echo [$(date)] ">> Volcando DB a ${WORKDIR}/backups/${MYSQL_DATABASE}${FECHA}.sql" >>$LOG_DIR
-docker compose exec ${SERVICE_NAME} bash -c "mysqldump -p${DB_PASSWORD} ${DB_NAME} > backups/${DB_NAME}${FECHA}.sql"
+echo [$(date)] ">> Volcando DB a ${WORKDIR}/backups/${DB_NAME}${FECHA}.sql" >>$LOG_DIR
+docker compose exec -T ${SERVICE_NAME} bash -c "mysqldump -uroot -p${DB_ROOT_PASSWORD} ${DB_NAME} > /backups/${DB_NAME}${FECHA}.sql"
 if [ $? -ne 0 ]; then 
     echo [$(date)] "STATUS: ERROR" >>$LOG_DIR
     echo [$(date)] "STATUS: BACKUP INCOMPLETO" >>$LOG_DIR

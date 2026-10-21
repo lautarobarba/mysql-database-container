@@ -10,3 +10,6 @@ backup.log
 
 # Script Backup
 backup_cron.sh
+
+# Archivo temporal para resetear la password de root
+reset-root.sql

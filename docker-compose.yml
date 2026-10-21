@@ -2,17 +2,13 @@ name: mysql_db
 services:
   mysql_db:
     container_name: mysql_db
-    image: mysql:8.0
-    env_file: .env
+    image: mysql:9.7
     environment:
       - TZ=America/Argentina/Buenos_Aires
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_USER=${DB_USER}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
     restart: always
     healthcheck:
-      test: mysqladmin ping -u${DB_USER} -p${DB_PASSWORD} || exit 1
+      test: mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" || exit 1
       interval: 60s
       retries: 5
       start_period: 1s
