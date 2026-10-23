@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Backup de bases de datos MySQL a AWS S3 Glacier Deep Archive.
+# Ver BACKUPS.md para la configuración.
+
+#========== CONFIG ==========
+# Bases de datos a respaldar (separadas por espacio)
+DATABASES="mi_proyecto_db otro_proyecto_db"
+
+# Bucket y carpeta (prefijo) de destino en S3
+S3_BUCKET=mi-bucket-de-backups
+S3_PREFIX=mysql/$(hostname)
+
+# Clase de almacenamiento: DEEP_ARCHIVE es la más barata y durable
+S3_STORAGE_CLASS=DEEP_ARCHIVE
+
+# Perfil de credenciales de AWS CLI (ver ~/.aws/credentials)
+AWS_PROFILE=mysql-backup
+
+# Servicio definido en docker-compose.yml
+SERVICE_NAME=mysql_db
+#======== END CONFIG ========
+
+set -o pipefail
+export PATH=/usr/local/bin:/usr/bin:/bin:${PATH}
+export AWS_PROFILE
+
+SCRIPT_PATH=$(realpath "$0")
+WORKDIR=$(dirname "${SCRIPT_PATH}")
+LOG_FILE=${WORKDIR}/backup.log
+LOCAL_DIR=${WORKDIR}/backups
+FECHA=$(date +%Y%m%d-%H%M)
+
+log() {
+    echo "[$(date)] $*" >>"${LOG_FILE}"
+}
+
+cd "${WORKDIR}" || exit 1
+mkdir -p "${LOCAL_DIR}"
+log "========== Comenzando script Backup (Glacier) - MYSQL =========="
+
+ERRORES=0
+for DB_NAME in ${DATABASES}; do
+    FILE_NAME=${DB_NAME}-${FECHA}.sql.gz
+    FILE=${LOCAL_DIR}/${FILE_NAME}
+    S3_URI=s3://${S3_BUCKET}/${S3_PREFIX}/${DB_NAME}/${FILE_NAME}
+
+    log ">> Volcando ${DB_NAME} a ${FILE}"
+    docker compose exec -T "${SERVICE_NAME}" sh -c \
+        "mysqldump -uroot -p\"\$MYSQL_ROOT_PASSWORD\" --single-transaction --routines --triggers --events --set-gtid-purged=OFF ${DB_NAME}" \
+        2>>"${LOG_FILE}" | gzip >"${FILE}"
+    if [ $? -ne 0 ]; then
+        log "STATUS: ERROR al volcar ${DB_NAME}"
+        rm -f "${FILE}"
+        ERRORES=$((ERRORES + 1))
+        continue
+    fi
+    log "STATUS: OK"
+
+    log ">> Subiendo ${FILE} a ${S3_URI} (${S3_STORAGE_CLASS})"
+    if ! aws s3 cp "${FILE}" "${S3_URI}" --storage-class "${S3_STORAGE_CLASS}" --only-show-errors 2>>"${LOG_FILE}"; then
+        log "STATUS: ERROR al subir ${DB_NAME}, el backup queda en ${FILE}"
+        ERRORES=$((ERRORES + 1))
+        continue
+    fi
+    log "STATUS: OK"
+
+    rm -f "${FILE}"
+done
+
+if [ ${ERRORES} -ne 0 ]; then
+    log "STATUS: ERROR - ${ERRORES} base(s) de datos no se pudieron respaldar"
+    log "STATUS: BACKUP INCOMPLETO"
+    log "------------------------------------"
+    exit 1
+fi
+log "STATUS: BACKUP FINALIZADO CORRECTAMENTE"
+log "------------------------------------"
+exit 0

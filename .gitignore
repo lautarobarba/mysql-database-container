@@ -4,12 +4,14 @@
 # Volumenes de docker
 database
 backups
+restore
 
 # Logs
 backup.log
 
 # Script Backup
-backup_cron.sh
+backup_rsync.sh
+backup_glacier.sh
 
 # Archivo temporal para resetear la password de root
 reset-root.sql

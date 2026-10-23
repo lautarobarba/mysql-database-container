@@ -169,77 +169,18 @@ $ docker compose up -d
 
 ## Backups
 
-Se creó un volumen para guardar los _backups_ en **/backups**. Los backups se hacen **por base de datos** con el usuario `root`.
+Los backups se hacen **por base de datos** con el usuario `root`. Los archivos se guardan en **/backups**.
 
-### Realizar backup
+Para backups automáticos (a otro servidor con rsync o a AWS S3 Glacier Deep Archive), cómo descargarlos y cómo restaurarlos en una instancia nueva, ver **[BACKUPS.md](BACKUPS.md)**.
+
+### Backup manual
 
 Reemplazar `mi_proyecto_db` por la base de datos a respaldar.
 
 ```bash
-$ docker compose exec -it mysql_db bash
-root@container:$ mysqldump -uroot -p mi_proyecto_db > /backups/mi_proyecto_db$(date "+%Y%m%d-%H_%M")hs.sql
-Enter password: # DB_ROOT_PASSWORD
-root@container:$ exit
+$ docker compose exec -T mysql_db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --routines --triggers --events --set-gtid-purged=OFF mi_proyecto_db' | gzip > mi_proyecto_db-$(date +%Y%m%d-%H%M).sql.gz
 ```
 
 ### Restaurar backup
 
-Para restaurar el backup tenemos que entrar a una shell del contenedor y restaurar el backup que se encuentra en el volumen montado.
-
-1. Hay que asegurarse de tener el backup en la carpeta **/backups**.
-2. La base de datos tiene que existir (ver [Crear la base de datos](#1-crear-la-base-de-datos)).
-
-```bash
-$ cd backups
-$ sudo unzip NOMBRE_BACKUP.zip
-$ cd ..
-$ docker compose exec -it mysql_db bash
-root@container:$ mysql -uroot -p mi_proyecto_db < /backups/NOMBRE_BACKUP.sql
-Enter password: # DB_ROOT_PASSWORD
-root@container:$ exit
-```
-
-## Programar backups automáticos (CRON)
-
-### Prerrequisitos
-
-En el servidor de destino tiene que estar configurado ssh para aceptar autenticación con Public Keys.
-
-```bash
-$ #------------------------------------------------------------------------------
-$ # ¡¡¡En el servidor de destino!!!
-$ # Preparar un usuario y ruta de backups
-$ useradd -m backup_user -s /bin/bash
-$ passwd backup_user
-$ # Tendremos un usuario backup_user para realizar los backups
-$ #   y un dir /home/backup_user para guardarlos
-$
-$ # Configurar autenticación de sshd
-$ sudo nano /etc/ssh/sshd_config
-$ # Descomentar la linea que tiene: PubkeyAuthentication yes
-$ sudo systemctl restart sshd.service
-$ #------------------------------------------------------------------------------
-$ # ¡¡¡En el servidor de origen del backup (USUARIO ROOT)!!!
-root$ # Generar las claves del usuario que va a ejecutar el script en este equipo
-root$ ssh-keygen
-root$ ssh-copy-id backup_user@SERVIDOR_DESTINO
-```
-
-### Programar tarea
-
-```bash
-$ # En el servidor de origen del backup
-$ cp backup_cron.sh.example backup_cron.sh
-$ chmod +x backup_cron.sh
-$ # Configurar DB_NAME, DB_ROOT_PASSWORD y el destino (SSH_DEST_*)
-$ #   Para respaldar varias bases de datos, hacer una copia del script por cada una
-$ nano backup_cron.sh
-$ # Programar la tarea con cron (USUARIO ROOT)
-root$ crontab -e
-root$ # En cron:
-			# Para probar un backup cada 5 minutos
-			*/5 * * * * bash /ruta_al_script/backup_cron.sh
-
-			# Para dejar el backup 1 vez por dia
-			0 0 * * * bash /ruta_al_script/backup_cron.sh
-```
+Ver [Restaurar en una instancia nueva](BACKUPS.md#restaurar-en-una-instancia-nueva).
