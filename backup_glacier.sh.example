@@ -16,7 +16,7 @@ S3_STORAGE_CLASS=DEEP_ARCHIVE
 # Perfil de credenciales de AWS CLI (ver ~/.aws/credentials)
 AWS_PROFILE=mysql-backup
 
-# Servicio definido en docker-compose.yml
+# Servicio definido en compose.yaml
 SERVICE_NAME=mysql_db
 #======== END CONFIG ========
 

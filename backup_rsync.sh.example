@@ -12,7 +12,7 @@ SSH_DEST_PORT=22
 SSH_DEST_USER=backup_user
 SSH_DEST_PATH=/home/backup_user/backups/mysql
 
-# Servicio definido en docker-compose.yml
+# Servicio definido en compose.yaml
 SERVICE_NAME=mysql_db
 #======== END CONFIG ========
 
